@@ -1,0 +1,23 @@
+{
+    "LATAM": [
+        "Brazil",
+        "Argentina",
+        "Mexico",
+        "Columbia",
+        "Peru",
+        "El Salvador"
+    ],
+    "Europe": [
+        "Germany",
+        "France",
+        "Italy"
+    ],
+    "Asia": [
+        "Japan",
+        "China",
+        "India"
+    ],
+    "Africa": [
+        "Kenya"
+    ]
+}

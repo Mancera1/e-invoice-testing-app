@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Invoice System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="YourLogo">
+        </div>
+        <nav>
+            <ul id="nav-list">
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_countries') }}">Manage Countries</a></li>
+                <li><a href="{{ url_for('generate_invoice_form') }}">Generate Invoice</a></li>
+            </ul>
+            <div class="hamburger-menu" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="dashboard">
+            <article class="card" id="quick-stats">
+                <h2>Quick Stats</h2>
+                <p>Total Countries Configured: {{ total_countries }}</p>
+                <p>Total Templates Available: {{ total_templates }}</p>
+            </article>
+
+            <article class="card" id="recent-activity">
+                <h2>Recent Activity</h2>
+                <input type="search" id="search-activities" placeholder="Search activities...">
+                <ul id="activity-list">
+                    {% for activity in recent_activity %}
+                    <li>{{ activity.timestamp }}: {{ activity.activity }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+
+            <article class="card" id="quick-actions">
+                <h2>Quick Actions</h2>
+                <button onclick="location.href='{{ url_for('add_country') }}'">Add New Country</button>
+                <button onclick="location.href='{{ url_for('manage_countries') }}'">Manage Countries</button>
+                <button onclick="location.href='{{ url_for('generate_invoice_form') }}'">Generate Invoice</button>
+            </article>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; {{ current_year }} Invoice System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>

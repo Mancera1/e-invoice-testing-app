@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Countries</title>
+</head>
+<body>
+    <h1>Manage Countries</h1>
+    <ul>
+        {% for country in countries %}
+            <li>{{ country.name }} - {{ country.region }}
+                <button onclick="editCountry('{{ country.id }}')">Edit</button>
+                <button onclick="deleteCountry('{{ country.id }}')">Delete</button>
+            </li>
+        {% endfor %}
+    </ul>
+    <script>
+        function editCountry(countryId) {
+            // Implement edit functionality here
+            console.log("Editing country with ID: " + countryId);
+        }
+
+        function deleteCountry(countryId) {
+            // Implement delete functionality here
+            console.log("Deleting country with ID: " + countryId);
+        }
+    </script>
+</body>
+</html>

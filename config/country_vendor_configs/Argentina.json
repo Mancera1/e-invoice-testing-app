@@ -1,0 +1,15 @@
+{
+    "format": "XML",
+    "staticFields": {
+        "Currency": "USD",
+        "CountryCode": "Argentina"
+    },
+    "fieldsOrder": [
+        "InvoiceNumber",
+        "InvoiceDate",
+        "Items",
+        "TotalAmount",
+        "TaxAmount",
+        "GrandTotal"
+    ]
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Invoice System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Your Company Logo">
+        </div>
+        <nav>
+            <ul id="nav-list">
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/manage-countries">Manage Countries</a></li>
+                <li><a href="/generate-invoice">Generate Invoice</a></li>
+                <!-- Other primary links -->
+            </ul>
+            <div class="hamburger-menu" onclick="toggleMenu()">
+                <!-- Hamburger icon: spans will be styled to form a hamburger icon -->
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-title">
+            <h1>Generate Invoice</h1>
+        </section>
+        <section class="filter">
+            <!-- Form fields for invoice filters go here -->
+        </section>
+        <section class="action-button">
+            <button>Generate</button>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; Invoice System Generator.</p>
+    </footer>
+
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script>
+    // Function to toggle the menu on mobile view
+    function toggleMenu() {
+        const navList = document.getElementById('nav-list');
+        navList.classList.toggle('show-menu');
+    }
+</script>
+</body>
+</html>
