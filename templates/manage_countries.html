@@ -2,27 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Countries</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="YourLogo">
+        </div>
+        <nav>
+            <ul id="nav-list">
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_countries') }}">Manage Countries</a></li>
+                <li><a href="{{ url_for('generate_invoice_form') }}">Generate Invoice</a></li>
+            </ul>
+            <div class="hamburger-menu" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+<!-- ... other HTML ... -->
+
+<main>
     <h1>Manage Countries</h1>
-    <ul>
+    <input type="search" id="countrySearch" placeholder="Search countries..." onkeyup="searchCountries()">
+<table id="countriesTable">
+    <thead>
+        <tr>
+            <th>Country Name</th>
+            <th>File Type</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
         {% for country in countries %}
-            <li>{{ country.name }} - {{ country.region }}
-                <button onclick="editCountry('{{ country.id }}')">Edit</button>
-                <button onclick="deleteCountry('{{ country.id }}')">Delete</button>
-            </li>
+            <tr>
+                <td>{{ country.name }}</td>
+                <td>{{ country.file_type }}</td>
+                <td>
+                    <button onclick="location.href='{{ url_for('edit_country', country_id=country.name) }}'">Edit</button>
+                    <button onclick="if(confirm('Are you sure?')) location.href='{{ url_for('delete_country', country_id=country.name) }}'">Delete</button>
+                </td>
+            </tr>
         {% endfor %}
-    </ul>
+    </tbody>
+</table>
+</main>
+
+<!-- ... other HTML ... -->
+
+
+    <footer>
+        <p>&copy; {{ current_year }} Invoice System. All rights reserved.</p>
+    </footer>
+
     <script>
-        function editCountry(countryId) {
-            // Implement edit functionality here
-            console.log("Editing country with ID: " + countryId);
+        function toggleMenu() {
+            const navList = document.getElementById('nav-list');
+            navList.classList.toggle('show-menu');
         }
 
-        function deleteCountry(countryId) {
-            // Implement delete functionality here
-            console.log("Deleting country with ID: " + countryId);
+        function searchCountries() {
+            let input = document.getElementById('countrySearch');
+            let filter = input.value.toUpperCase();
+            let ul = document.getElementById("countriesList");
+            let li = ul.getElementsByTagName('li');
+
+            for (let i = 0; i < li.length; i++) {
+                let txtValue = li[i].textContent || li[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
         }
     </script>
 </body>

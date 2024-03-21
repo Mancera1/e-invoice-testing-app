@@ -2,16 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Country</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Add New Country</h1>
-    <form action="{{ url_for('add_country_form') }}" method="get">
-        <label for="country">Country Name:</label>
-        <input type="text" id="country" name="country" required>
-        <label for="region">Region:</label>
-        <input type="text" id="region" name="region" required>
-        <button type="submit">Add Country</button>
-    </form>
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="YourLogo">
+        </div>
+        <nav>
+            <ul id="nav-list">
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_countries') }}">Manage Countries</a></li>
+                <li><a href="{{ url_for('generate_invoice_form') }}">Generate Invoice</a></li>
+            </ul>
+            <div class="hamburger-menu" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Add New Country</h1>
+        <form action="{{ url_for('add_country') }}" method="post">
+            <label for="country">Country Name:</label>
+            <input type="text" id="country" name="country" required>
+
+            <label for="region">Region:</label>
+            <input type="text" id="region" name="region" required>
+
+            <label for="template_type">Template Type:</label>
+            <select id="template_type" name="template_type" required>
+                <option value="xml">XML</option>
+                <option value="json">JSON</option>
+                <option value="jinja">Jinja</option>
+            </select>
+
+            <button type="submit">Add Country</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; {{ current_year }} Invoice System. All rights reserved.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>

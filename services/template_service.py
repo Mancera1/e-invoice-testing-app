@@ -26,6 +26,7 @@ class TemplateService:
         template = self.jinja_env.get_template(template_name)
         return template.render(context)
 
+
     def get_template(self, country, format, use_jinja=False):
         """
         Fetches the template; if use_jinja is True, it expects a Jinja2 template.

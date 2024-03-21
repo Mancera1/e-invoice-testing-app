@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice</title>
+</head>
+<body>
+    <h1>Invoice: {{ invoice_number }}</h1>
+    <p>Date: {{ invoice_date }}</p>
+    <h2>Customer Details</h2>
+    <p>Name: {{ name }}</p>
+    <p>Email: {{ email }}</p>
+    <p>Tax ID: {{ tax_id }}</p>
+    <h2>Order Details</h2>
+    <p>Order ID: {{ order_reference_id }}</p>
+    <p>Description: {{ order_description }}</p>
+    <p>Total: {{ order_total }}</p>
+    <h2>Invoice Lines</h2>
+    {% for line in invoice_lines %}
+    <div class="invoice-line">
+        <p>Description: {{ line.description }}</p>
+        <p>Product ID: {{ line.product_id }}</p>
+        <p>Quantity: {{ line.quantity }}</p>
+        <p>Amount: {{ line.amount }}</p>
+        <p>Tax: {{ line.tax_amount }}</p>
+    </div>
+    {% endfor %}
+    <h2>Total Due: {{ invoice_total }}</h2>
+</body>
+</html>
