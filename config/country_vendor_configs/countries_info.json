@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Mexico",
+        "file_type": "xml",
+        "region": "LATAM"
+    },
+    {
+        "name": "Brazil",
+        "template_type": "xml",
+        "region": "LATAM"
+    },
+    {
+        "name": "Peru",
+        "template_type": "xml",
+        "region": "LATAM"
+    }
+]

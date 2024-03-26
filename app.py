@@ -7,8 +7,14 @@ from services.template_service import TemplateService
 from services.configuration_service import ConfigurationService
 # Include your database utility functions
 from database import get_sql_connection
+from flask_wtf.csrf import CSRFProtect
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
 
 app = Flask(__name__, static_url_path='', static_folder='static', template_folder='templates')
+app.config['SECRET_KEY'] = ''
+csrf = CSRFProtect(app)
+
 app.config['TEMPLATE_EXTENSIONS'] = ['.j2', '.html']
 
 # Setup for configuration service
@@ -37,24 +43,27 @@ def dashboard():
 
 @app.route('/add-country')
 def add_country_form():
-    return render_template('add_country_form.html')
+    with open('config/invoice_fields.json') as f:
+        fields = json.load(f)
+    return render_template('add_country_form.html', fields=fields)
+
 
 
 @app.route('/add-country', methods=['POST'])
 def add_country():
+    # Existing setup code
     country = request.form['country']
     region = request.form['region']
-    template_type = request.form['template_type'].lower()  # Expecting 'json', 'xml', or 'jinja'
+    template_type = request.form['template_type'].lower()
 
-    # Normalize country name for file and directory paths
-    country_normalized = country.replace(" ", "_")
+    # Handle the new field selections
+    selected_fields = request.form.getlist('details')  # Assuming 'details' contains the selected fields
 
-    # Create the template files based on the selected type
-    create_template_from_base(country_normalized, template_type)
+    # Create the template based on the base template and selected additional fields
+    create_template_from_base_with_fields(country, template_type, region, selected_fields)
 
-    # Add additional logic as needed, such as updating databases, etc.
-    log_activity(f"Added new country: {country} with a {template_type} template")
     return redirect(url_for('dashboard'))
+
 
 
 
@@ -75,15 +84,13 @@ def generate_invoice():
 
 @app.route('/manage-countries')
 def manage_countries():
-    countries = []
-    config_path = os.path.join('config', 'country_vendor_configs')
-    for filename in os.listdir(config_path):
-        if filename.endswith('.json'):
-            country_name = filename[:-5]  # Remove the .json extension to get the country name
-            with open(os.path.join(config_path, filename)) as f:
-                country_config = json.load(f)
-                file_type = country_config.get('format', 'Unknown')  # Extract the file type
-            countries.append({'name': country_name, 'file_type': file_type})
+    countries_info_path = os.path.join('config', 'country_vendor_configs', 'countries_info.json')
+    if os.path.exists(countries_info_path):
+        with open(countries_info_path, 'r') as file:
+            countries = json.load(file)
+    else:
+        countries = []
+
     return render_template('manage_countries.html', countries=countries)
 
 
@@ -108,12 +115,44 @@ def edit_country(country_id):
         country = {"id": country_id, "name": "Placeholder Country", "region": "Placeholder Region"}
         return render_template('edit_country_form.html', country=country)
 
-@app.route('/delete-country/<country_id>', methods=['POST'])
-def delete_country(country_id):
-    # Implement the logic to delete a country by its ID
-    # For demonstration purposes, this will just redirect
+
+@app.route('/delete-country/<country_name>', methods=['POST'])
+def delete_country(country_name):
+    # Normalize country name for file and directory paths
+    country_normalized = country_name.replace(" ", "_")
+
+    # Delete the country information from countries_info.json
+    delete_country_info(country_normalized)
+
+    # Delete the template file associated with the country
+    delete_template_file(country_normalized)
+
     return redirect(url_for('manage_countries'))
 
+
+def delete_template_file(country):
+    # Assuming you might have different template types for different countries,
+    # so we check for each possible type
+    template_types = ['json', 'xml', 'jinja']
+    # app_root = os.path.join(os.getcwd(), 'apps', 'e-invoice-generator-app', 'invoice_templates')
+    app_root = os.path.join(os.getcwd(), 'invoice_templates')
+    for template_type in template_types:
+        template_path = os.path.join(app_root, template_type, f"{country}.{template_type}")
+        if os.path.exists(template_path):
+            os.remove(template_path)
+
+
+def delete_country_info(country):
+    config_path = os.path.join(os.getcwd(), 'config', 'country_vendor_configs', 'countries_info.json')
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as file:
+            countries_info = json.load(file)
+
+        # Filter out the country to be deleted
+        countries_info = [info for info in countries_info if info['name'] != country]
+
+        with open(config_path, 'w') as file:
+            json.dump(countries_info, file, indent=4)
 
 def log_activity(activity):
     connection = get_sql_connection()
@@ -143,27 +182,66 @@ def fetch_recent_activity_from_database():
     return []
 
 
-def create_xml_or_jinja_template(country, template_type):
+def create_xml_or_jinja_template(country, template_type, selected_fields=None):
     # Load the default configuration
     default_config_path = os.path.join('config', 'country_vendor_configs', 'default.json')
     with open(default_config_path, 'r') as file:
         default_config = json.load(file)
 
     # Determine the file extension based on the template type
+    file_extension = '.xml' if template_type == 'xml' else '.j2'
+
+    base_template_path = os.path.join('invoice_templates', template_type, f"base_template{file_extension}")
+    new_template_path = os.path.join('invoice_templates', template_type, f"{country}{file_extension}")
+
     if template_type == 'xml':
-        file_extension = '.xml'
-    elif template_type == 'jinja':
-        file_extension = '.j2'
+        tree = ET.parse(base_template_path)
+        root = tree.getroot()
+
+        # Dynamically update or remove elements based on selected_fields
+        for elem in root.findall("./*"):
+            if elem.tag not in selected_fields:
+                root.remove(elem)
+            else:
+                # Update placeholders for selected elements if needed
+                elem.text = f"{{{{ {elem.tag} }}}}"
+
+        # Add new elements that are in selected_fields but not in the base template
+        for field in selected_fields:
+            if root.find(f"./{field}") is None:
+                ET.SubElement(root, field).text = f"{{{{ {field} }}}}"
+
+        # Generate the new XML content
+        template_content = ET.tostring(root, encoding='unicode')
     else:
-        raise ValueError("Unsupported template type")
+        # Handle Jinja template generation
+        template_content = generate_template_content(default_config, template_type)
 
-    # Generate the template content based on the default configuration
-    template_content = generate_template_content(default_config, template_type)
-
-    # Save the new template content to a file
-    template_path = os.path.join('invoice_templates', template_type, f"{country}{file_extension}")
-    with open(template_path, 'w') as file:
+    # Save the updated or new template content to a file
+    with open(new_template_path, 'w') as file:
         file.write(template_content)
+
+import xml.etree.ElementTree as ET
+
+def create_dynamic_xml_template(selected_fields):
+    # Create the root element
+    invoice = ET.Element('Invoice')
+
+    # Dynamically add child elements based on selected fields
+    for field in selected_fields:
+        # For simplicity, adding all fields directly under the root
+        # In a real application, you might need to structure this according to your XML schema
+        ET.SubElement(invoice, field).text = f"{{{{ {field} }}}}"
+
+    # Convert the ElementTree to a string
+    xml_str = ET.tostring(invoice, 'utf-8')
+
+    return xml_str
+
+
+def generate_template_content(config, template_type):
+    # Placeholder for generating Jinja template content based on configuration
+    return "{% extends 'base_template.j2' %}\n{% block content %}\n  <!-- Dynamic Content Here -->\n{% endblock %}"
 
 
 
@@ -221,30 +299,26 @@ def create_template(country, template_type):
     print(f"{template_type.capitalize()} template created for {country}.")
 
 
-def create_template_from_base(country, template_type):
-    # Define the path to your base templates
-    base_template_path = {
-        'json': 'invoice_templates/json/base_template.json',
-        'xml': 'invoice_templates/xml/base_template.xml',
-        'jinja': 'invoice_templates/jinja/base_template.j2'
-    }
+def create_template_from_base(country, template_type, region, selected_details):
+    # Define the path to the base template and the destination for the new template
+    base_template_path = os.path.join(os.getcwd(), 'invoice_templates', template_type, f'base_template.{template_type}')
+    new_template_path = os.path.join(os.getcwd(), 'invoice_templates', template_type, f"{country}.{template_type}")
 
-    # Check if the base template for the given type exists
-    if template_type in base_template_path:
-        base_path = base_template_path[template_type]
-        if os.path.exists(base_path):
-            with open(base_path, 'r') as base_file:
-                base_content = base_file.read()
+    # Ensure the base template file exists before attempting to read it
+    if not os.path.exists(base_template_path):
+        raise FileNotFoundError(f"Base template for {template_type} not found.")
 
-            # Create a country-specific template file from the base template
-            country_template_path = os.path.join('invoice_templates', template_type, f"{country}.{template_type}")
-            with open(country_template_path, 'w') as country_file:
-                country_file.write(base_content)
-            print(f"{template_type.capitalize()} template created for {country}.")
-        else:
-            print(f"Base template for {template_type} does not exist.")
-    else:
-        print(f"Unsupported template type: {template_type}")
+    # Read the base template content
+    with open(base_template_path, 'r') as base_template:
+        content = base_template.read()
+
+    # Save the base template content as the new template for the country
+    with open(new_template_path, 'w') as new_template:
+        new_template.write(content)
+
+    # Update the countries_info.json to include the new country's information
+    update_country_info(country, template_type, region, os.path.join(os.getcwd(), 'config', 'country_vendor_configs'))
+    print(f"Template for {country} created based on the base template for {template_type}.")
 
 
 def get_countries_info(directory="config/country_vendor_configs"):
@@ -258,8 +332,148 @@ def get_countries_info(directory="config/country_vendor_configs"):
     return countries_info
 
 
+@app.route('/edit-template/<template_type>/<country_name>', methods=['GET', 'POST'])
+def edit_template(template_type, country_name):
+    if request.method == 'POST':
+        new_content = request.form['template_content']
+        save_template_content(template_type, country_name, new_content)
+        return redirect(url_for('manage_countries'))
+    else:
+        content = get_template_content(template_type, country_name)
+        return render_template('edit_template_form.html', content=content, country_name=country_name, template_type=template_type)
+
+
+def get_template_content(template_type, country_name):
+    file_path = os.path.join(app.root_path, 'invoice_templates', template_type, f"{country_name}.{template_type}")
+    try:
+        with open(file_path, 'r') as file:
+            return file.read()
+    except FileNotFoundError:
+        return "File not found."
+
+def save_template_content(template_type, country_name, content):
+    file_path = os.path.join(app.root_path, 'invoice_templates', template_type, f"{country_name}.{template_type}")
+    with open(file_path, 'w') as file:
+        file.write(content)
+
+
+def add_or_update_xml_field_correctly(template_content, new_fields):
+    """
+    Adds or updates XML elements based on new_fields dictionary.
+    Ensures elements are placed logically according to the invoice structure.
+
+    Args:
+        template_content (str): Original XML content of the invoice template.
+        new_fields (dict): Dictionary of new fields to add or update.
+                           Keys are field names, values are the content.
+
+    Returns:
+        str: Updated XML content.
+    """
+    root = ET.fromstring(template_content)
+
+    # Example: Assuming all new fields should be within <InvoiceDetails>
+    invoice_details = root.find('InvoiceDetails')
+    if invoice_details is None:
+        invoice_details = ET.SubElement(root, 'InvoiceDetails')
+
+    for field, value in new_fields.items():
+        existing = invoice_details.find(field)
+        if existing is not None:
+            existing.text = value
+        else:
+            ET.SubElement(invoice_details, field).text = value
+
+    # Convert back to a string while preserving structure
+    rough_string = ET.tostring(root, 'utf-8')
+    prettified_xml = prettify_xml(rough_string)  # Use the new prettify_xml function here
+    return prettified_xml
+
+
+def create_template_from_base_with_fields(country, template_type, region, selected_details):
+    base_template_path = os.path.join(os.getcwd(), 'invoice_templates', template_type, 'base_template.xml')
+    new_template_path = os.path.join(os.getcwd(), 'invoice_templates', template_type, f"{country}.xml")
+
+    if not os.path.exists(base_template_path):
+        raise FileNotFoundError(f"Base template for {template_type} not found.")
+
+    tree = ET.parse(base_template_path)
+    root = tree.getroot()
+
+    # Iterate over selected_details to integrate them into the template
+    for detail in selected_details:
+        # Check if this detail is already in the base template
+        existing_element = root.find(f".//{detail}")
+        if existing_element is not None:
+            # If the element exists, you may choose to update it
+            existing_element.text = f"{{{{ {detail} }}}}"
+        else:
+            # If the element doesn't exist, add it where it logically belongs
+            # This is a simplified example; your logic may vary
+            new_element = ET.SubElement(root, detail)
+            new_element.text = f"{{{{ {detail} }}}}"
+
+    # Save the modified tree to a new XML file for the country
+    tree.write(new_template_path)
+
+    update_country_info(country, template_type, region, os.path.join(os.getcwd(), 'config', 'country_vendor_configs'))
+    print(f"Template for {country} updated with selected fields based on the base template for {template_type}.")
+
+
+
+
+def update_country_info(country, template_type, region, config_path):
+    countries_info_path = os.path.join(config_path, 'countries_info.json')
+
+    if os.path.exists(countries_info_path):
+        with open(countries_info_path, 'r') as file:
+            countries_info = json.load(file)
+    else:
+        countries_info = []
+
+    country_info = {
+        "name": country,
+        "template_type": template_type,
+        "region": region
+    }
+
+    # Avoid duplicating country info
+    if not any(info['name'] == country for info in countries_info):
+        countries_info.append(country_info)
+
+        with open(countries_info_path, 'w') as file:
+            json.dump(countries_info, file, indent=4)
+
+
+def prettify_xml(xml_string):
+    """
+    Removes excessive whitespace from an XML string.
+
+    Args:
+        xml_string (str): The XML string to be prettified.
+
+    Returns:
+        str: The prettified XML string with minimized whitespace.
+    """
+    from xml.dom.minidom import parseString
+
+    # Parse the XML string
+    dom = parseString(xml_string)
+
+    # Prettify the XML string
+    pretty_xml_as_string = dom.toprettyxml()
+
+    # Post-process to remove blank lines
+    lines = pretty_xml_as_string.split('\n')
+    non_empty_lines = [line for line in lines if line.strip()]
+
+    # Join the non-empty lines to form the final string
+    final_xml_string = '\n'.join(non_empty_lines)
+
+    return final_xml_string
 
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+

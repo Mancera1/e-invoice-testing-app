@@ -111,3 +111,41 @@ footer {
     bottom: 0;
     width: 100%;
 }
+
+.action-buttons button, .action-buttons form button {
+    margin: 0 5px; /* Add some space around buttons */
+    padding: 5px 10px; /* Add padding inside buttons */
+    background-color: #007bff; /* Button background color */
+    color: #ffffff; /* Button text color */
+    border: 1px solid #007bff; /* Button border */
+    border-radius: 5px; /* Rounded corners for the button */
+    cursor: pointer; /* Cursor pointer to indicate it's clickable */
+    text-align: center;
+    display: inline-block; /* Ensure buttons are inline */
+}
+
+.action-buttons button:hover, .action-buttons form button:hover {
+    background-color: #0056b3; /* Darker shade for hover effect */
+    border-color: #0056b3;
+}
+
+.action-buttons form {
+    display: inline; /* Display form inline with the edit button */
+}
+
+
+.button, .edit-btn, .delete-btn {
+    margin: 0 5px; /* Adds some space around the buttons */
+    padding: 5px 10px; /* Adds padding inside the buttons */
+    background-color: #007bff; /* Button background color */
+    color: #ffffff; /* Button text color */
+    border: none; /* No border */
+    border-radius: 4px; /* Rounded corners for the button */
+    cursor: pointer; /* Cursor pointer to indicate it's clickable */
+    text-decoration: none; /* Removes underline from links */
+    display: inline-block; /* Ensures buttons and links are inline */
+}
+
+.button:hover, .edit-btn:hover, .delete-btn:hover {
+    background-color: #0056b3; /* Darker shade for hover effect */
+}

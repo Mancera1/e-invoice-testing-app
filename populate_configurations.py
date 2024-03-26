@@ -5,7 +5,7 @@ import os
 from services.configuration_service import ConfigurationService
 
 # Assuming country_region_mapping.json lists all countries
-country_region_path = os.path.join('config', 'country_region_mapping.json')
+country_region_path = os.path.join('config', 'countries_info.json')
 
 def populate_base_configurations():
     config_service = ConfigurationService()

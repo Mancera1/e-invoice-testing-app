@@ -27,7 +27,9 @@
 
     <main>
         <h1>Add New Country</h1>
+
         <form action="{{ url_for('add_country') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <label for="country">Country Name:</label>
             <input type="text" id="country" name="country" required>
 
@@ -41,6 +43,18 @@
                 <option value="jinja">Jinja</option>
             </select>
 
+            <!-- Trigger Button -->
+            <button type="button" id="customizeTemplateBtn">Customize Base Template</button>
+
+            <!-- Fields Modal -->
+            <div id="fieldsModal" style="display:none;">
+                <div style="display:flex; flex-wrap:wrap;">
+                    <!-- JavaScript will populate this area with fields -->
+                </div>
+                <button type="button" id="saveFieldsBtn">Save Choices</button>
+            </div>
+
+            <!-- Submit button for the form -->
             <button type="submit">Add Country</button>
         </form>
     </main>
@@ -48,7 +62,109 @@
     <footer>
         <p>&copy; {{ current_year }} Invoice System. All rights reserved.</p>
     </footer>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Example structure for fieldsData, assuming Flask transforms config/invoice_fields.json appropriately
+    const fieldsData = [
+    { name: "account_type", label: "Account Type", includedInBase: true },
+    { name: "customer_account_id", label: "Customer Account ID", includedInBase: true },
+    { name: "name", label: "Name", includedInBase: true },
+    { name: "email", label: "Email", includedInBase: true },
+    { name: "tax_id", label: "Tax ID", includedInBase: true },
+    { name: "order_reference_id", label: "Order Reference ID", includedInBase: true },
+    { name: "order_currency_code", label: "Order Currency Code", includedInBase: true },
+    { name: "order_description", label: "Order Description", includedInBase: true },
+    { name: "order_total", label: "Order Total", includedInBase: true },
+    { name: "invoice_date", label: "Invoice Date", includedInBase: true },
+    { name: "invoice_number", label: "Invoice Number", includedInBase: true },
+    { name: "invoice_total", label: "Invoice Total", includedInBase: true },
+    { name: "invoice_line_description", label: "Invoice Line Description", includedInBase: true },
+    { name: "invoice_product_id", label: "Invoice Product ID", includedInBase: true },
+    { name: "quantity", label: "Quantity", includedInBase: true },
+    { name: "product_amount", label: "Product Amount", includedInBase: true },
+    { name: "tax_amount", label: "Tax Amount", includedInBase: true },
+    // Fields not included in the base template.json but present in config/invoice_fields.json
+    { name: "country_code", label: "Country Code", includedInBase: false },
+    { name: "adminArea", label: "Administrative Area", includedInBase: false },
+    { name: "phone_number", label: "Phone Number", includedInBase: false },
+    { name: "payment_terms", label: "Payment Terms", includedInBase: false },
+    { name: "country_code", label: "Country Code", includedInBase: false },
+    { name: "adminArea", label: "Administrative Area", includedInBase: false },
+    { name: "phone_number", label: "Phone Number", includedInBase: false },
+    { name: "payment_terms", label: "Payment Terms", includedInBase: false },
+    { name: "address", label: "Address", includedInBase: false },
+    { name: "invoice_paid", label: "Invoice Paid", includedInBase: false },
+    { name: "order_status", label: "Order Status", includedInBase: false },
+    { name: "is_refunded", label: "Is Refunded", includedInBase: false },
+    { name: "is_cancelled", label: "Is Cancelled", includedInBase: false },
+    { name: "p.commodity_code", label: "Product Commodity Code", includedInBase: false },
+    { name: "p.product_type", label: "Product Type", includedInBase: false },
+    { name: "designation", label: "Designation", includedInBase: false },
+    { name: "invoice_line_total", label: "Invoice Line Total", includedInBase: false },
+    { name: "TotalTaxAmount", label: "Total Tax Amount", includedInBase: false },
+    { name: "tax_authority_type", label: "Tax Authority Type", includedInBase: false },
+    { name: "tax_description", label: "Tax Description", includedInBase: false },
+    { name: "tax_line_amount", label: "Tax Line Amount", includedInBase: false },
+    { name: "discount_amount", label: "Discount Amount", includedInBase: false },
+    { name: "service_period_start_date", label: "Service Period Start Date", includedInBase: false },
+    { name: "service_period_end_date", label: "Service Period End Date", includedInBase: false },
+    { name: "paid_date", label: "Paid Date", includedInBase: false },
+    { name: "payments_amount", label: "Payments Amount", includedInBase: false },
+    { name: "IsShipped", label: "Is Shipped", includedInBase: false },
+    { name: "shipped_date", label: "Shipped Date", includedInBase: false }
+];
 
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    const baseTemplateFields = ["account_type", "customer_account_id", "name", "email", "tax_id", "order_reference_id", "order_currency_code", "order_description", "order_total", "invoice_date", "invoice_number", "invoice_total", "invoice_line_description", "invoice_product_id", "quantity", "product_amount", "tax_amount"];
+    // This should be dynamically generated based on the content of the base templates
+
+    const fieldsContainer = document.getElementById('fieldsModal').querySelector('div');
+
+    fieldsData.forEach(field => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = field.name;
+        checkbox.name = 'details';
+        checkbox.value = field.name;
+        checkbox.checked = baseTemplateFields.includes(field.name); // Check if field is in base template
+
+        const label = document.createElement('label');
+        label.htmlFor = field.name;
+        label.textContent = field.label || field.name; // Use label if available, fallback to name
+
+        fieldsContainer.appendChild(label);
+        label.insertBefore(checkbox, label.firstChild); // Insert checkbox inside label before text
+        fieldsContainer.appendChild(document.createElement('br'));
+    });
+
+    document.getElementById('customizeTemplateBtn').addEventListener('click', function() {
+        document.getElementById('fieldsModal').style.display = 'block';
+    });
+
+    document.getElementById('saveFieldsBtn').addEventListener('click', function() {
+        const selectedFields = Array.from(document.querySelectorAll('#fieldsModal input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+
+        if (selectedFields.length === 0) {
+            alert("Please select at least one field.");
+            document.getElementById('fieldsModal').style.display = 'block';
+            return;
+        }
+
+        const hiddenInput = document.getElementById('selectedFieldsInput') || createHiddenInput();
+        hiddenInput.value = JSON.stringify(selectedFields);
+        document.getElementById('fieldsModal').style.display = 'none';
+    });
+
+    function createHiddenInput() {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'selectedFieldsInput';
+        hiddenInput.name = 'selectedFields';
+        document.querySelector('form').appendChild(hiddenInput);
+        return hiddenInput;
+    }
+});
+</script>
+
 </body>
 </html>

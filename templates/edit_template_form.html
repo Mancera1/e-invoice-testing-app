@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Template</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <main>
+        <h1>Edit Template: {{ country_name }}</h1>
+        <form action="" method="post">
+            <textarea name="template_content" rows="20" style="width:100%;">{{ content }}</textarea>
+            <br>
+            <input type="submit" value="Save">
+        </form>
+    </main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<Invoice>
+  <AccountType>{{ account_type }}</AccountType>
+  <CustomerAccountId>{{ customer_account_id }}</CustomerAccountId>
+  <CustomerDetails>
+    <Name>{{ name }}</Name>
+    <Email>{{ email }}</Email>
+    <TaxId>{{ tax_id }}</TaxId>
+  </CustomerDetails>
+  <Order>
+    <OrderReferenceId>{{ order_reference_id }}</OrderReferenceId>
+    <CurrencyCode>{{ order_currency_code }}</CurrencyCode>
+    <Description>{{ order_description }}</Description>
+    <Total>{{ order_total }}</Total>
+  </Order>
+  <InvoiceDetails>
+    <Date>{{ invoice_date }}</Date>
+    <Number>{{ invoice_number }}</Number>
+    <Total>{{ invoice_total }}</Total>
+    <Lines>
+      <Line>
+        <Description>{{ invoice_line_description }}</Description>
+        <ProductId>{{ invoice_product_id }}</ProductId>
+        <Quantity>{{ quantity }}</Quantity>
+        <Amount>{{ product_amount }}</Amount>
+        <TaxAmount>{{ tax_amount }}</TaxAmount>
+      </Line>
+    </Lines>
+  </InvoiceDetails>
+</Invoice>
